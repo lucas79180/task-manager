@@ -18,29 +18,65 @@ async function api(path, options = {}) {
 function taskCard(task) {
   const div = document.createElement("div");
   div.className = "task";
-  div.innerHTML = `
-    <div class="row">
-      <h3>${escapeHtml(task.title)}</h3>
-      <span class="badge">${task.status}</span>
-    </div>
-    <p>${
-      task.description ? task.description : "<em>Pas de description</em>"
-    }</p>
-    <small>
-      id=${task.id} â€¢ crÃ©Ã©=${new Date(task.created_at).toLocaleString()}
-    </small>
-    <div class="actions">
-      <select data-role="status">
-        <option value="TODO" ${task.status === "TODO" ? "selected" : ""}>TODO</option>
-        <option value="DOING" ${task.status === "DOING" ? "selected" : ""}>DOING</option>
-        <option value="DONE" ${task.status === "DONE" ? "selected" : ""}>DONE</option>
-      </select>
-      <button class="secondary" data-role="save">Mettre Ã  jour</button>
-      <button data-role="delete">Supprimer</button>
-    </div>
-  `;
+  const row = document.createElement("div");
+  row.className = "row";
 
-  div.querySelector('[data-role="save"]').addEventListener("click", async () => {
+  const title = document.createElement("h3");
+  title.textContent = task.title || "";
+
+  const badge = document.createElement("span");
+  badge.className = "badge";
+  badge.textContent = task.status || "";
+
+  row.appendChild(title);
+  row.appendChild(badge);
+
+  const description = document.createElement("p");
+  if (task.description) {
+    description.textContent = task.description;
+  } else {
+    const em = document.createElement("em");
+    em.textContent = "Pas de description";
+    description.appendChild(em);
+  }
+
+  const meta = document.createElement("small");
+  meta.textContent = `id=${task.id} â€¢ crÃ©Ã©=${new Date(
+    task.created_at
+  ).toLocaleString()}`;
+
+  const actions = document.createElement("div");
+  actions.className = "actions";
+
+  const statusSelect = document.createElement("select");
+  statusSelect.setAttribute("data-role", "status");
+  ["TODO", "DOING", "DONE"].forEach((value) => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = value;
+    if (task.status === value) option.selected = true;
+    statusSelect.appendChild(option);
+  });
+
+  const saveBtn = document.createElement("button");
+  saveBtn.className = "secondary";
+  saveBtn.setAttribute("data-role", "save");
+  saveBtn.textContent = "Mettre Ã  jour";
+
+  const deleteBtn = document.createElement("button");
+  deleteBtn.setAttribute("data-role", "delete");
+  deleteBtn.textContent = "Supprimer";
+
+  actions.appendChild(statusSelect);
+  actions.appendChild(saveBtn);
+  actions.appendChild(deleteBtn);
+
+  div.appendChild(row);
+  div.appendChild(description);
+  div.appendChild(meta);
+  div.appendChild(actions);
+
+  saveBtn.addEventListener("click", async () => {
     const status = div.querySelector('[data-role="status"]').value;
     await api(`/tasks/${task.id}`, {
       method: "PUT",
@@ -49,7 +85,7 @@ function taskCard(task) {
     await refresh();
   });
 
-  div.querySelector('[data-role="delete"]').addEventListener("click", async () => {
+  deleteBtn.addEventListener("click", async () => {
     if (!confirm("Supprimer cette tÃ¢che ?")) return;
     await api(`/tasks/${task.id}`, { method: "DELETE" });
     await refresh();
@@ -58,30 +94,39 @@ function taskCard(task) {
   return div;
 }
 
-function escapeHtml(s) {
-  return String(s)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
 async function refresh() {
   const container = document.getElementById("tasks");
-  container.innerHTML = "";
+  container.textContent = "";
   try {
     const tasks = await api("/tasks");
     if (tasks.length === 0) {
-      container.innerHTML = "<p><em>Aucune tÃ¢che pour lâ€™instant.</em></p>";
+      const empty = document.createElement("p");
+      const em = document.createElement("em");
+      em.textContent = "Aucune tÃ¢che pour lâ€™instant.";
+      empty.appendChild(em);
+      container.appendChild(empty);
       return;
     }
     tasks.forEach((t) => container.appendChild(taskCard(t)));
   } catch (e) {
-    container.innerHTML = `
-      <p style="color:#b00020"><strong>Erreur:</strong> ${escapeHtml(e.message)}</p>
-      <p>VÃ©rifie que lâ€™API tourne sur <code>${API_URL}</code>.</p>
-    `;
+    const errorP = document.createElement("p");
+    errorP.style.color = "#b00020";
+    const strong = document.createElement("strong");
+    strong.textContent = "Erreur:";
+    errorP.appendChild(strong);
+    errorP.appendChild(document.createTextNode(` ${e.message}`));
+
+    const hintP = document.createElement("p");
+    hintP.appendChild(
+      document.createTextNode("VÃ©rifie que lâ€™API tourne sur ")
+    );
+    const code = document.createElement("code");
+    code.textContent = API_URL;
+    hintP.appendChild(code);
+    hintP.appendChild(document.createTextNode("."));
+
+    container.appendChild(errorP);
+    container.appendChild(hintP);
   }
 }
 

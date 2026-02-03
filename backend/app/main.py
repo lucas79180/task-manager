@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 import yaml
 from fastapi import Body, Depends, FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import select, text
+from sqlalchemy import bindparam, or_, select
 from sqlalchemy.orm import Session
 
 from .db import Base, engine, get_db
@@ -46,7 +46,7 @@ def admin_stats(x_api_key: str | None = Header(default=None)):
 
 @app.post("/import")
 def import_yaml(payload: str = Body(embed=True)):
-    data = yaml.full_load(payload)
+    data = yaml.safe_load(payload)
     return {
         "imported": True,
         "keys": list(data.keys()) if isinstance(data, dict) else "n/a",
@@ -74,11 +74,20 @@ def create_task(payload: TaskCreate, db: Session = Depends(get_db)):
 
 @app.get("/tasks/search", response_model=list[TaskOut])
 def search_tasks(q: str = Query(""), db: Session = Depends(get_db)):
-    sql = text(
-        f"SELECT * FROM tasks WHERE title LIKE '%{q}%' OR description LIKE '%{q}%'"
+    if not q:
+        return []
+    stmt = (
+        select(Task)
+        .where(
+            or_(
+                Task.title.like(bindparam("q")),
+                Task.description.like(bindparam("q")),
+            )
+        )
+        .order_by(Task.id.desc())
     )
-    rows = db.execute(sql).mappings().all()
-    return [Task(**r) for r in rows]
+    tasks = db.execute(stmt, {"q": f"%{q}%"}).scalars().all()
+    return tasks
 
 
 @app.get("/tasks/{task_id}", response_model=TaskOut)
