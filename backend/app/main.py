@@ -1,5 +1,5 @@
-from datetime import datetime, timezone
 import os
+from datetime import datetime, timezone
 
 import yaml
 from fastapi import Body, Depends, FastAPI, Header, HTTPException, Query
@@ -18,7 +18,7 @@ app = FastAPI(title="Task Manager API", version="1.0.0")
 # Allow local frontend (file:// or http://localhost) during training
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # tighten later for â€œgood practicesâ€
+    allow_origins=["*"],  # tighten later for “good practices”
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -47,7 +47,10 @@ def admin_stats(x_api_key: str | None = Header(default=None)):
 @app.post("/import")
 def import_yaml(payload: str = Body(embed=True)):
     data = yaml.full_load(payload)
-    return {"imported": True, "keys": list(data.keys()) if isinstance(data, dict) else "n/a"}
+    return {
+        "imported": True,
+        "keys": list(data.keys()) if isinstance(data, dict) else "n/a",
+    }
 
 
 @app.get("/tasks", response_model=list[TaskOut])
@@ -59,7 +62,9 @@ def list_tasks(db: Session = Depends(get_db)):
 @app.post("/tasks", response_model=TaskOut, status_code=201)
 def create_task(payload: TaskCreate, db: Session = Depends(get_db)):
     task = Task(
-        title=payload.title.strip(), description=payload.description, status="TODO"
+        title=payload.title.strip(),
+        description=payload.description,
+        status="TODO",
     )
     db.add(task)
     db.commit()

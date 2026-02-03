@@ -23,8 +23,12 @@ function taskCard(task) {
       <h3>${escapeHtml(task.title)}</h3>
       <span class="badge">${task.status}</span>
     </div>
-    <p>${task.description ? task.description : "<em>Pas de description</em>"}</p>
-    <small>id=${task.id} â€¢ crÃ©Ã©=${new Date(task.created_at).toLocaleString()}</small>
+    <p>${
+      task.description ? task.description : "<em>Pas de description</em>"
+    }</p>
+    <small>
+      id=${task.id} â€¢ crÃ©Ã©=${new Date(task.created_at).toLocaleString()}
+    </small>
     <div class="actions">
       <select data-role="status">
         <option value="TODO" ${task.status === "TODO" ? "selected" : ""}>TODO</option>
