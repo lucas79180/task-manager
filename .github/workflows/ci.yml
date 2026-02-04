@@ -67,10 +67,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r backend/requirements.txt
-          snyk test --file=backend/requirements.txt
+          snyk test --file=backend/requirements.txt --policy-path=.snyk
 
       - name: Build backend image for Snyk
         run: docker build -t task-manager-backend ./backend
 
       - name: Snyk container test
-        run: snyk container test task-manager-backend
+        run: snyk container test task-manager-backend --policy-path=.snyk
