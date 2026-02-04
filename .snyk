@@ -1,0 +1,6 @@
+version: v1.25.0
+ignore:
+  SNYK-DEBIAN12-ZLIB-6008963:
+    - '*':
+        reason: "No upstream fix available for Debian 12 base image yet"
+        expires: 2026-03-31T00:00:00.000Z
