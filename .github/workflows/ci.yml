@@ -64,7 +64,10 @@ jobs:
           snyk auth "$SNYK_TOKEN"
 
       - name: Snyk test (requirements)
-        run: snyk test --file=backend/requirements.txt
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          snyk test --file=backend/requirements.txt
 
       - name: Build backend image for Snyk
         run: docker build -t task-manager-backend ./backend
