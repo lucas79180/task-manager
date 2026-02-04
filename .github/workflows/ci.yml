@@ -41,29 +41,33 @@ jobs:
         run: docker compose -f docker-compose.yml config
 
   snyk:
-    env:
-      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-    if: ${{ env.SNYK_TOKEN != '' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        if: ${{ secrets.SNYK_TOKEN != '' }}
 
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+        if: ${{ secrets.SNYK_TOKEN != '' }}
 
       - name: Install Snyk CLI
         run: npm install -g snyk
+        if: ${{ secrets.SNYK_TOKEN != '' }}
 
       - name: Snyk auth
-        run: snyk auth ${{ env.SNYK_TOKEN }}
+        run: snyk auth ${{ secrets.SNYK_TOKEN }}
+        if: ${{ secrets.SNYK_TOKEN != '' }}
 
       - name: Snyk test (requirements)
         run: snyk test --file=backend/requirements.txt
+        if: ${{ secrets.SNYK_TOKEN != '' }}
 
       - name: Build backend image for Snyk
         run: docker build -t task-manager-backend ./backend
+        if: ${{ secrets.SNYK_TOKEN != '' }}
 
       - name: Snyk container test
         run: snyk container test task-manager-backend
+        if: ${{ secrets.SNYK_TOKEN != '' }}
