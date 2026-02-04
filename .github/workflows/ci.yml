@@ -22,3 +22,46 @@ jobs:
 
       - name: Run pre-commit
         run: pre-commit run --all-files
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build backend lint target
+        run: docker build --target lint -t task-manager-backend-lint ./backend
+
+      - name: Build backend image
+        run: docker build -t task-manager-backend ./backend
+
+      - name: Build frontend image
+        run: docker build -t task-manager-frontend ./frontend
+
+      - name: Validate compose recipe
+        run: docker compose -f docker-compose.yml config
+
+  snyk:
+    if: ${{ secrets.SNYK_TOKEN != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Snyk CLI
+        run: npm install -g snyk
+
+      - name: Snyk auth
+        run: snyk auth ${{ secrets.SNYK_TOKEN }}
+
+      - name: Snyk test (requirements)
+        run: snyk test --file=backend/requirements.txt
+
+      - name: Build backend image for Snyk
+        run: docker build -t task-manager-backend ./backend
+
+      - name: Snyk container test
+        run: snyk container test task-manager-backend
