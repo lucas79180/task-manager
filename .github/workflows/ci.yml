@@ -42,32 +42,32 @@ jobs:
 
   snyk:
     runs-on: ubuntu-latest
+    env:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
     steps:
       - uses: actions/checkout@v4
-        if: ${{ secrets.SNYK_TOKEN != '' }}
 
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-        if: ${{ secrets.SNYK_TOKEN != '' }}
 
       - name: Install Snyk CLI
         run: npm install -g snyk
-        if: ${{ secrets.SNYK_TOKEN != '' }}
 
       - name: Snyk auth
-        run: snyk auth ${{ secrets.SNYK_TOKEN }}
-        if: ${{ secrets.SNYK_TOKEN != '' }}
+        run: |
+          if [ -z "$SNYK_TOKEN" ]; then
+            echo "SNYK_TOKEN not set; skipping Snyk steps."
+            exit 0
+          fi
+          snyk auth "$SNYK_TOKEN"
 
       - name: Snyk test (requirements)
         run: snyk test --file=backend/requirements.txt
-        if: ${{ secrets.SNYK_TOKEN != '' }}
 
       - name: Build backend image for Snyk
         run: docker build -t task-manager-backend ./backend
-        if: ${{ secrets.SNYK_TOKEN != '' }}
 
       - name: Snyk container test
         run: snyk container test task-manager-backend
-        if: ${{ secrets.SNYK_TOKEN != '' }}
